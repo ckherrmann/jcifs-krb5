@@ -76,7 +76,7 @@ public class SmbFileInputStream extends InputStream {
             file.connect0();
         }
         readSize = Math.min( file.tree.session.transport.rcv_buf_size - 70,
-                            file.tree.session.transport.server.maxBufferSize - 70 );
+                        Math.max(file.tree.session.transport.server.maxBufferSize, file.tree.session.transport.server.maxRawSize) - 70 );
     }
 
     protected IOException seToIoe(SmbException se) {

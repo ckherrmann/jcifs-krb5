@@ -13,6 +13,9 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 
+import com.sun.security.jgss.ExtendedGSSContext;
+import com.sun.security.jgss.InquireType;
+
 // >>SmbAuthenticator
 /**
  * This class used to provide Kerberos feature when setup GSSContext.
@@ -28,19 +31,20 @@ class Kerb5Context {
             String service, 
             String name,
             int userLifetime,
-            int contextLifetime
+            int contextLifetime,
+            GSSCredential cred
             ) throws GSSException{
         GSSManager manager = GSSManager.getInstance();
         Oid oid = null; 
         GSSName serviceName = null;
         GSSName clientName = null;
-        GSSCredential clientCreds = null;
+        GSSCredential clientCreds = cred;
         
         oid = new Oid(OID);
 
         serviceName = manager.createName(
                 service + "@" + host, GSSName.NT_HOSTBASED_SERVICE, oid);
-        if(name!=null){
+        if(name!=null && clientCreds == null){
             clientName = manager.createName(name, GSSName.NT_USER_NAME, oid);
             clientCreds = manager.createCredential(
                         clientName, userLifetime, oid, GSSCredential.INITIATE_ONLY);
@@ -57,18 +61,22 @@ class Kerb5Context {
     }
     
     Key searchSessionKey(Subject subject) throws GSSException{
-        MIEName src = new MIEName(gssContext.getSrcName().export());
-        MIEName targ = new MIEName(gssContext.getTargName().export());
-        Iterator iter = subject.getPrivateCredentials(KerberosTicket.class).iterator();
-        while (iter.hasNext()) {
-            KerberosTicket ticket = (KerberosTicket) iter.next();
-            MIEName client = new MIEName(gssContext.getMech(), ticket.getClient().getName());
-            MIEName server = new MIEName(gssContext.getMech(), ticket.getServer().getName());
-            if(src.equals(client)&&targ.equals(server)){
-                return ticket.getSessionKey();
-            }
-        }
-        return null;
+//see 
+//        MIEName src = new MIEName(gssContext.getSrcName().export());
+//        MIEName targ = new MIEName(gssContext.getTargName().export());
+//        Iterator iter = subject.getPrivateCredentials(KerberosTicket.class).iterator();
+//        while (iter.hasNext()) {
+//            KerberosTicket ticket = (KerberosTicket) iter.next();
+//            MIEName client = new MIEName(gssContext.getMech(), ticket.getClient().getName());
+//            MIEName server = new MIEName(gssContext.getMech(), ticket.getServer().getName());
+//            if(src.equals(client)&&targ.equals(server)){
+//                return ticket.getSessionKey();
+//            }
+//        }
+//        return null;
+        ExtendedGSSContext ec =(ExtendedGSSContext)gssContext; 
+        Key key = (Key) ec.inquireSecContext(InquireType.KRB5_GET_SESSION_KEY);
+        return key;
     }
     public void dispose() throws GSSException {
         if(gssContext != null){

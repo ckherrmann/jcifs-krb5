@@ -54,6 +54,7 @@ public class Kerb5Authenticator implements SmbExtendedAuthenticator{
     private String service = SERVICE;
     private int userLifetime = GSSCredential.DEFAULT_LIFETIME;
     private int contextLifetime = GSSContext.DEFAULT_LIFETIME;
+    private GSSCredential cred = null;
 
     /**
      * Contruct a <code>Kerb5Authenticator</code> object with <code>Subject</code>
@@ -67,6 +68,10 @@ public class Kerb5Authenticator implements SmbExtendedAuthenticator{
         this.subject = subject;
     }
 
+    public Kerb5Authenticator(Subject subject, GSSCredential cred){
+        this.subject = subject;
+        this.cred = cred;
+    }    
     /**
      * Set the user name which is used to setup <code>GSSContext</code>. If null
      * is set, the default user will be used which is retrieved from the first
@@ -234,7 +239,8 @@ public class Kerb5Authenticator implements SmbExtendedAuthenticator{
                 service,
                 user,
                 userLifetime,
-                contextLifetime
+                contextLifetime,
+                cred
                 );
         kerb5Context.getGSSContext().requestAnonymity(false);
         kerb5Context.getGSSContext().requestSequenceDet(false);
